@@ -49,9 +49,9 @@ export default class CommandLine {
     let trace = this.loadTrace();
     let profile = this.cpuProfile(trace)!;
 
-    this.export(profile.hierarchy, trace);
-
     let modMatcher = new ModuleMatcher(profile.hierarchy, archive);
+
+    this.export(profile.hierarchy, trace, modMatcher);
 
     let categories = formatCategories(report, methods);
     let allMethods = methodsFromCategories(categories);
@@ -79,9 +79,9 @@ export default class CommandLine {
     return trace.cpuProfile(min, max);
   }
 
-  private export(hierarchy: HierarchyNode<ICpuProfileNode>, trace: Trace) {
+  private export(hierarchy: HierarchyNode<ICpuProfileNode>, trace: Trace, modMatcher: ModuleMatcher) {
     const { filePath } = this;
     const rawTraceData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    exportHierarchy(rawTraceData, hierarchy, trace, filePath);
+    exportHierarchy(rawTraceData, hierarchy, trace, filePath, modMatcher);
   }
 }
