@@ -2,6 +2,7 @@ import { HierarchyNode } from 'd3-hierarchy';
 import * as fs from 'fs';
 import { ICpuProfileNode, Trace } from '../trace';
 import { exportHierarchy } from '../trace/export';
+import { isRenderNode } from '../trace/renderEvents';
 import { aggregate, categorizeAggregations, collapseCallFrames, verifyMethods } from './aggregator';
 import { Archive } from './archive_trace';
 import { ModuleMatcher } from './module_matcher';
@@ -62,6 +63,23 @@ export default class CommandLine {
     let collapsed = collapseCallFrames(aggregations);
     let categorized = categorizeAggregations(collapsed, categories);
     reporter(categorized);
+
+    const renderNodes = this.getRenderingNodes(profile.hierarchy);
+    renderNodes.forEach(node => {
+      let renderAgg = aggregate(node, allMethods, archive, modMatcher);
+      let renderCollapsed = collapseCallFrames(renderAgg);
+      let renderCategorized = categorizeAggregations(renderCollapsed, categories);
+      console.log(`Render Node:${node.data.callFrame.functionName}`); // tslint:disable-line  no-console
+      reporter(renderCategorized);
+    });
+  }
+
+  private getRenderingNodes(root: HierarchyNode<ICpuProfileNode>) {
+    const renderNodes: Array<HierarchyNode<ICpuProfileNode>> = [];
+    root.each((node: HierarchyNode<ICpuProfileNode>) => {
+      if (isRenderNode(node)) renderNodes.push(node);
+    });
+    return renderNodes;
   }
 
   private loadTrace() {
